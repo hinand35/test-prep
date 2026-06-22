@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中3定期テスト対策・爆速一問一答</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --accent-hover: #7dd3fc;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --correct: #4ade80;
+            --incorrect: #f87171;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        h1 { font-size: 1.4rem; text-align: center; color: var(--accent); margin-top: 0; }
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mode-btn {
+            flex: 1; padding: 10px; border: none; border-radius: 8px;
+            background: #334155; color: var(--text-muted); cursor: pointer; font-weight: bold;
+        }
+        .mode-btn.active { background: var(--accent); color: var(--bg-color); }
+        .badge {
+            background: #f59e0b; color: #000; padding: 4px 8px; border-radius: 4px;
+            font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 10px;
+        }
+        .quiz-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; }
+        .question-box { font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; line-height: 1.5; }
+        .options-list { display: flex; flex-direction: column; gap: 10px; }
+        .option-btn {
+            padding: 12px; border: 1px solid #475569; border-radius: 8px;
+            background: transparent; color: var(--text); text-align: left; cursor: pointer; font-size: 1rem;
+        }
+        .option-btn:hover { background: #334155; }
+        .option-btn.correct-ans { background: var(--correct); color: #000; border-color: var(--correct); }
+        .option-btn.incorrect-ans { background: var(--incorrect); color: #000; border-color: var(--incorrect); }
+        .feedback { font-weight: bold; margin-top: 15px; text-align: center; font-size: 1.1rem; }
+        .feedback.correct-text { color: var(--correct); }
+        .feedback.incorrect-text { color: var(--incorrect); }
+        .next-btn {
+            width: 100%; padding: 12px; background: var(--accent); color: var(--bg-color);
+            border: none; border-radius: 8px; margin-top: 20px; font-weight: bold; cursor: pointer; display: none;
+        }
+        .next-btn:hover { background: var(--accent-hover); }
+        .result-screen { text-align: center; display: none; }
+        .score { font-size: 2rem; font-weight: bold; color: var(--accent); margin: 20px 0; }
+        .reset-btn { background: #475569; color: var(--text); width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔥 定期テスト直前対策アプリ</h1>
+    
+    <div id="setup-area">
+        <div class="mode-selector">
+            <button class="mode-btn active" id="btn-normal" onclick="setMode('normal')">教科書進行モード</button>
+            <button class="mode-btn" id="btn-review" onclick="setMode('review')">弱点克服モード (<span id="review-count">0</span>)</button>
+        </div>
+    </div>
+
+    <div id="quiz-area">
+        <div id="review-badge" class="badge" style="display: none;">💡 前回間違えた問題だよ！</div>
+        <div class="quiz-header">
+            <span id="quiz-category">教科</span>
+            <span id="quiz-progress">1/10</span>
+        </div>
+        <div class="question-box" id="question-text">問題文がここに入ります。</div>
+        <div class="options-list" id="options-container"></div>
+        <div class="feedback" id="feedback-text"></div>
+        <button class="next-btn" id="next-button" onclick="nextQuestion()">次の問題へ</button>
+    </div>
+
+    <div class="result-screen" id="result-area">
+        <h2>🎉 テスト終了！</h2>
+        <div class="score" id="final-score">8 / 10</div>
+        <p id="result-msg">その調子！間違えた問題は自動で「弱点克服モード」に保存されたよ。</p>
+        <button class="next-btn" style="display: block;" onclick="restartQuiz()">もう一度解く</button>
+        <button class="reset-btn" onclick="clearData()">間違えた記録をリセットする</button>
+    </div>
+</div>
+
+<script>
+// 問題データベース（中3定期テスト頻出ターゲット）
+const quizData = [
+    { id: "S1", cat: "社会", q: "1858年に井伊直弼が朝廷の許可を得ずに結んだ、日本に不利な不平等条約は？", a: "日米修好通商条約", o: ["日米和親条約", "日米修好通商条約", "下関条約", "ポーツマス条約"] },
+    { id: "S2", cat: "社会", q: "明治政府の改革で、地価の3%を税金として「現金」で納めさせた法改正は？", a: "地租改正", o: ["版籍奉還", "徴兵令", "地租改正", "殖産興業"] },
+    { id: "S3", cat: "社会", q: "日清戦争の講和条約（下関条約）で、日本が清から譲り受けた島は？", a: "台湾", o: ["樺太", "尖閣諸島", "沖縄", "台湾"] },
+    { id: "S4", cat: "社会", q: "1937年、北京郊外での武力衝突（盧溝橋事件）をきっかけに始まった泥沼の戦争は？", a: "日中戦争", o: ["日露戦争", "第一次世界大戦", "満州事変", "日中戦争"] },
+    { id: "M1", cat: "数学", q: "√3 のおよその値（小数）の覚え方として正しいものはどれ？", a: "人並みに奢れや（1.732...）", o: ["一夜一転び（1.414...）", "人並みに奢れや（1.732...）", "富士山麓オウム鳴く（2.236...）", "菜に虫いない（7.232...）"] },
+    { id: "M2", cat: "数学", q: "計算しなさい： √12 ＋ √3", a: "3√3", o: ["√15", "2√3", "3√3", "5"] },
+    { id: "R1", cat: "理科", q: "塩化水素（HCl）が水に溶けて電離する様子を表した式はどれ？", a: "HCl → H⁺ + Cl⁻", o: ["HCl → H⁺ + Cl⁻", "HCl → H₂ + Cl₂", "HCl → H⁻ + Cl⁺", "HCl → H⁺ + Cl²⁻"] },
+    { id: "R2", cat: "理科", q: "水溶液にすると電流が流れる物質（塩化銅や食塩など）を何というか？", a: "電解質", o: ["非電解質", "電解質", "イオン", "原子"] },
+    { id: "E1", cat: "英語", q: "「私は今までに3回ハワイに行ったことがあります」現在完了のどの用法？", a: "経験", o: ["継続", "完了", "結果", "経験"] },
+    { id: "E2", cat: "英語", q: "「私はちょうど宿題を終えたところです」空欄に入る言葉は？ I have (   ) finished my homework.", a: "just", o: ["yet", "already", "just", "never"] }
+];
+
+let currentMode = 'normal'; 
+let currentPool = [];
+let currentIndex = 0;
+let score = 0;
+let hasAnswered = false;
+
+// ローカルストレージから間違えた問題のIDリストを取得
+getMissedIds = () => JSON.parse(localStorage.getItem('missed_questions')) || [];
+saveMissedIds = (ids) => localStorage.setItem('missed_questions', JSON.stringify(ids));
+
+function updateReviewCount() {
+    document.getElementById('review-count').innerText = getMissedIds().length;
+}
+
+function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('btn-normal').classList.toggle('active', mode === 'normal');
+    document.getElementById('btn-review').classList.toggle('active', mode === 'review');
+    restartQuiz();
+}
+
+function restartQuiz() {
+    currentIndex = 0;
+    score = 0;
+    const missedIds = getMissedIds();
+
+    if (currentMode === 'review') {
+        currentPool = quizData.filter(item => missedIds.includes(item.id));
+        if (currentPool.length === 0) {
+            alert('現在、間違えた問題はありません！素晴らしい！通常モードを解いてみよう。');
+            setMode('normal');
+            return;
+        }
+    } else {
+        currentPool = [...quizData]; // 通常モードは全問
+    }
+
+    // 問題をシャッフル
+    currentPool.sort(() => Math.random() - 0.5);
+    // 最大10問に制限
+    if (currentPool.length > 10) currentPool = currentPool.slice(0, 10);
+
+    document.getElementById('quiz-area').style.display = 'block';
+    document.getElementById('result-area').style.display = 'none';
+    updateReviewCount();
+    showQuestion();
+}
+
+function showQuestion() {
+    hasAnswered = false;
+    document.getElementById('next-button').style.display = 'none';
+    document.getElementById('feedback-text').innerText = '';
+    
+    const currentQ = currentPool[currentIndex];
+    const missedIds = getMissedIds();
+
+    // 弱点バッジの表示制御
+    document.getElementById('review-badge').style.display = missedIds.includes(currentQ.id) ? 'inline-block' : 'none';
+    
+    document.getElementById('quiz-category').innerText = `【${currentQ.cat}】`;
+    document.getElementById('quiz-progress').innerText = `${currentIndex + 1} / ${currentPool.length}`;
+    document.getElementById('question-text').innerText = currentQ.q;
+
+    const optionsContainer = document.getElementById('options-container');
+    optionsContainer.innerHTML = '';
+
+    // 選択肢をシャッフルしてボタン生成
+    const shuffledOptions = [...currentQ.o].sort(() => Math.random() - 0.5);
+    shuffledOptions.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(btn, opt, currentQ.a, currentQ.id);
+        optionsContainer.appendChild(btn);
+    });
+}
+
+function selectOption(selectedBtn, chosen, correct, qId) {
+    if (hasAnswered) return;
+    hasAnswered = true;
+
+    const optionsContainer = document.getElementById('options-container');
+    const buttons = optionsContainer.getElementsByClassName('option-btn');
+    const feedback = document.getElementById('feedback-text');
+    let missedIds = getMissedIds();
+
+    if (chosen === correct) {
+        selectedBtn.classList.add('correct-ans');
+        feedback.innerText = '⭕ 正解！';
+        feedback.className = 'feedback correct-text';
+        score++;
+        // 正解したら弱点リストから削除
+        missedIds = missedIds.filter(id => id !== qId);
+    } else {
+        selectedBtn.classList.add('incorrect-ans');
+        feedback.innerText = `❌ 不正解...（正解: ${correct}）`;
+        feedback.className = 'feedback incorrect-text';
+        // 間違えたら弱点リストに追加
+        if (!missedIds.includes(qId)) missedIds.push(qId);
+        
+        // 正解のボタンを光らせる
+        for (let btn of buttons) {
+            if (btn.innerText === correct) btn.classList.add('correct-ans');
+        }
+    }
+    saveMissedIds(missedIds);
+    updateReviewCount();
+    document.getElementById('next-button').style.display = 'block';
+}
+
+function nextQuestion() {
+    currentIndex++;
+    if (currentIndex < currentPool.length) {
+        showQuestion();
+    } else {
+        showResult();
+    }
+}
+
+function showResult() {
+    document.getElementById('quiz-area').style.display = 'none';
+    document.getElementById('result-area').style.display = 'block';
+    document.getElementById('final-score').innerText = `${score} / ${currentPool.length} 問正解`;
+}
+
+function clearData() {
+    if (confirm('間違えた問題の記録をすべて消去しますか？')) {
+        localStorage.removeItem('missed_questions');
+        updateReviewCount();
+        setMode('normal');
+    }
+}
+
+// 初回起動
+updateReviewCount();
+restartQuiz();
+</script>
+</body>
+</html>
