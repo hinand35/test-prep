@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中3定期テスト対策・爆速一問一答</title>
+    <title>中3定期テスト・5教科20秒タイムアタック</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -14,113 +14,158 @@
             --text-muted: #94a3b8;
             --correct: #4ade80;
             --incorrect: #f87171;
+            --timer-bg: #ef4444;
         }
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
         .container {
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             background: var(--card-bg);
-            padding: 25px;
+            padding: 20px;
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            box-sizing: border-box;
         }
-        h1 { font-size: 1.4rem; text-align: center; color: var(--accent); margin-top: 0; }
-        .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
-        .mode-btn {
-            flex: 1; padding: 10px; border: none; border-radius: 8px;
-            background: #334155; color: var(--text-muted); cursor: pointer; font-weight: bold;
+        h1 { font-size: 1.3rem; text-align: center; color: var(--accent); margin-top: 0; margin-bottom: 15px; }
+        
+        .select-title { font-size: 1rem; margin-bottom: 10px; text-align: center; color: var(--text-muted); }
+        .subject-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .menu-btn {
+            padding: 15px 10px; border: none; border-radius: 8px;
+            background: #334155; color: var(--text); cursor: pointer; font-weight: bold; font-size: 0.95rem;
+            transition: background 0.2s;
         }
-        .mode-btn.active { background: var(--accent); color: var(--bg-color); }
+        .menu-btn:hover { background: #475569; }
+        .menu-btn.all { grid-column: span 2; background: var(--accent); color: var(--bg-color); }
+        .menu-btn.all:hover { background: var(--accent-hover); }
+        .menu-btn.review-btn { grid-column: span 2; background: #f59e0b; color: #000; }
+        
+        .timer-container { width: 100%; height: 6px; background: #334155; border-radius: 3px; margin-bottom: 15px; overflow: hidden; display: none; }
+        .timer-bar { width: 100%; height: 100%; background: var(--timer-bg); transform-origin: left; transition: transform 0.1s linear; }
+
         .badge {
             background: #f59e0b; color: #000; padding: 4px 8px; border-radius: 4px;
-            font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 10px;
+            font-size: 0.75rem; font-weight: bold; display: inline-block; margin-bottom: 8px;
         }
-        .quiz-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; }
-        .question-box { font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; line-height: 1.5; }
-        .options-list { display: flex; flex-direction: column; gap: 10px; }
+        .quiz-header { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
+        .question-box { font-size: 1.05rem; font-weight: bold; margin-bottom: 15px; line-height: 1.5; min-height: 60px; white-space: pre-line; }
+        .options-list { display: flex; flex-direction: column; gap: 8px; }
         .option-btn {
             padding: 12px; border: 1px solid #475569; border-radius: 8px;
-            background: transparent; color: var(--text); text-align: left; cursor: pointer; font-size: 1rem;
+            background: transparent; color: var(--text); text-align: left; cursor: pointer; font-size: 0.95rem;
+            transition: background 0.1s;
         }
         .option-btn:hover { background: #334155; }
-        .option-btn.correct-ans { background: var(--correct); color: #000; border-color: var(--correct); }
-        .option-btn.incorrect-ans { background: var(--incorrect); color: #000; border-color: var(--incorrect); }
-        .feedback { font-weight: bold; margin-top: 15px; text-align: center; font-size: 1.1rem; }
+        .option-btn.correct-ans { background: var(--correct) !important; color: #000 !important; border-color: var(--correct) !important; font-weight: bold; }
+        .option-btn.incorrect-ans { background: var(--incorrect) !important; color: #000 !important; border-color: var(--incorrect) !important; }
+        .feedback { font-weight: bold; margin-top: 12px; text-align: center; font-size: 1rem; min-height: 24px; }
         .feedback.correct-text { color: var(--correct); }
         .feedback.incorrect-text { color: var(--incorrect); }
-        .next-btn {
-            width: 100%; padding: 12px; background: var(--accent); color: var(--bg-color);
-            border: none; border-radius: 8px; margin-top: 20px; font-weight: bold; cursor: pointer; display: none;
-        }
-        .next-btn:hover { background: var(--accent-hover); }
+        
         .result-screen { text-align: center; display: none; }
-        .score { font-size: 2rem; font-weight: bold; color: var(--accent); margin: 20px 0; }
-        .reset-btn { background: #475569; color: var(--text); width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        .score { font-size: 1.8rem; font-weight: bold; color: var(--accent); margin: 15px 0; }
+        .reset-btn { background: #475569; color: var(--text); width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🔥 定期テスト直前対策アプリ</h1>
+    <h1 id="app-title">⚡ 5教科爆速タイムアタック</h1>
     
-    <div id="setup-area">
-        <div class="mode-selector">
-            <button class="mode-btn active" id="btn-normal" onclick="setMode('normal')">教科書進行モード</button>
-            <button class="mode-btn" id="btn-review" onclick="setMode('review')">弱点克服モード (<span id="review-count">0</span>)</button>
+    <div id="menu-screen">
+        <div class="select-title">挑戦する教科を選択してください</div>
+        <div class="subject-grid">
+            <button class="menu-btn all" onclick="startQuiz('all')">全5教科ランダム (20問選出)</button>
+            <button class="menu-btn" onclick="startQuiz('国語')">国語 (光村図書)</button>
+            <button class="menu-btn" onclick="startQuiz('社会')">社会</button>
+            <button class="menu-btn" onclick="startQuiz('数学')">数学</button>
+            <button class="menu-btn" onclick="startQuiz('理科')">理科</button>
+            <button class="menu-btn" onclick="startQuiz('英語')">英語</button>
+            <button class="menu-btn review-btn" onclick="startQuiz('review')">弱点克服モード (<span id="review-count">0</span>)</button>
         </div>
     </div>
 
-    <div id="quiz-area">
-        <div id="review-badge" class="badge" style="display: none;">💡 前回間違えた問題だよ！</div>
+    <div id="quiz-screen" style="display: none;">
+        <div class="timer-container" id="timer-wraper">
+            <div class="timer-bar" id="timer-bar"></div>
+        </div>
+        <div id="review-badge" class="badge" style="display: none;">💡 前回ミス</div>
         <div class="quiz-header">
             <span id="quiz-category">教科</span>
-            <span id="quiz-progress">1/10</span>
+            <span id="quiz-progress">1/20</span>
         </div>
-        <div class="question-box" id="question-text">問題文がここに入ります。</div>
+        <div class="question-box" id="question-text">問題文</div>
         <div class="options-list" id="options-container"></div>
         <div class="feedback" id="feedback-text"></div>
-        <button class="next-btn" id="next-button" onclick="nextQuestion()">次の問題へ</button>
     </div>
 
-    <div class="result-screen" id="result-area">
-        <h2>🎉 テスト終了！</h2>
-        <div class="score" id="final-score">8 / 10</div>
-        <p id="result-msg">その調子！間違えた問題は自動で「弱点克服モード」に保存されたよ。</p>
-        <button class="next-btn" style="display: block;" onclick="restartQuiz()">もう一度解く</button>
-        <button class="reset-btn" onclick="clearData()">間違えた記録をリセットする</button>
+    <div id="result-screen" class="result-screen">
+        <h2>🏁 1クール終了！</h2>
+        <div class="score" id="final-score">0 / 20 問正解</div>
+        <p id="result-msg">間違えた問題・時間切れは自動で「弱点克服」に保存されました。</p>
+        <button class="menu-btn all" style="width: 100%;" onclick="showMenu()">トップに戻って別の教科を選ぶ</button>
+        <button class="reset-btn" onclick="clearData()">弱点記録をリセット</button>
     </div>
 </div>
 
 <script>
-// 問題データベース（中3定期テスト頻出ターゲット）
 const quizData = [
-    { id: "S1", cat: "社会", q: "1858年に井伊直弼が朝廷の許可を得ずに結んだ、日本に不利な不平等条約は？", a: "日米修好通商条約", o: ["日米和親条約", "日米修好通商条約", "下関条約", "ポーツマス条約"] },
-    { id: "S2", cat: "社会", q: "明治政府の改革で、地価の3%を税金として「現金」で納めさせた法改正は？", a: "地租改正", o: ["版籍奉還", "徴兵令", "地租改正", "殖産興業"] },
-    { id: "S3", cat: "社会", q: "日清戦争の講和条約（下関条約）で、日本が清から譲り受けた島は？", a: "台湾", o: ["樺太", "尖閣諸島", "沖縄", "台湾"] },
-    { id: "S4", cat: "社会", q: "1937年、北京郊外での武力衝突（盧溝橋事件）をきっかけに始まった泥沼の戦争は？", a: "日中戦争", o: ["日露戦争", "第一次世界大戦", "満州事変", "日中戦争"] },
-    { id: "M1", cat: "数学", q: "√3 のおよその値（小数）の覚え方として正しいものはどれ？", a: "人並みに奢れや（1.732...）", o: ["一夜一転び（1.414...）", "人並みに奢れや（1.732...）", "富士山麓オウム鳴く（2.236...）", "菜に虫いない（7.232...）"] },
-    { id: "M2", cat: "数学", q: "計算しなさい： √12 ＋ √3", a: "3√3", o: ["√15", "2√3", "3√3", "5"] },
-    { id: "R1", cat: "理科", q: "塩化水素（HCl）が水に溶けて電離する様子を表した式はどれ？", a: "HCl → H⁺ + Cl⁻", o: ["HCl → H⁺ + Cl⁻", "HCl → H₂ + Cl₂", "HCl → H⁻ + Cl⁺", "HCl → H⁺ + Cl²⁻"] },
-    { id: "R2", cat: "理科", q: "水溶液にすると電流が流れる物質（塩化銅や食塩など）を何というか？", a: "電解質", o: ["非電解質", "電解質", "イオン", "原子"] },
-    { id: "E1", cat: "英語", q: "「私は今までに3回ハワイに行ったことがあります」現在完了のどの用法？", a: "経験", o: ["継続", "完了", "結果", "経験"] },
-    { id: "E2", cat: "英語", q: "「私はちょうど宿題を終えたところです」空欄に入る言葉は？ I have (   ) finished my homework.", a: "just", o: ["yet", "already", "just", "never"] }
+    // 国語 (新規追加)
+    { id: "J1", cat: "国語", q: "漢文の記号で、すぐ下の文字を読んでから、上の文字に「下から上へ1文字だけ戻って読む」ものはどれ？", a: "レ点", o: ["一・二点", "上・下点", "レ点", "送り仮名"] },
+    { id: "J2", cat: "国語", q: "漢文の「不」という文字の読み方のルールとして、正しいものはどれ？", a: "すぐ下の動詞などを先に読んでから、最後に「ず」と戻って読む", o: ["上から順番にそのまま「ふ」と読む", "すぐ下の動詞などを先に読んでから、最後に「ず」と戻って読む", "その文章の一番最後に読む", "読まずに飛ばす"] },
+    { id: "J3", cat: "国語", q: "孔子『論語』の一節「亦説乎」の読み方（書き下し文）として正しいものはどれ？", a: "亦た説ばしからずや", o: ["亦た説ばしからずや", "亦た楽しからずや", "喜びて時にこれを習ふ", "遠方より来たる有り"] },
+    { id: "J4", cat: "国語", q: "孔子の言葉「朋遠方より来たる有り、亦た楽しからずや」の「朋（とも）」が表す意味として最も適切なものは？", a: "同じ志を持った学問の仲間", o: ["幼なじみの友達", "近所に住む知人", "同じ志を持った学問の仲間", "学校のクラスメイト"] },
+    { id: "J5", cat: "国語", q: "『握手』において、ルロイ修道士が人差し指と中指を交差させるフィンガーサイン（キングスクロッシング）が表す意味はどれ？", a: "幸運を祈る（グッドラック）", o: ["平和（ピース）", "勝利（ビクトリー）", "拒絶（だめだ）", "幸運を祈る（グッドラック）"] },
+    { id: "J6", cat: "国語", q: "『握手』で、ルロイ修道士が別れ際に「痛いほど激しく手を振った」のはなぜか。その時の彼の心情・理由として正しいものは？", a: "自分の命が長くないことを知っており、これが最後の別れになると覚悟していたから", o: ["久しぶりに教え子に会えて、嬉しくて興奮していたから", "自分の手の握力がまだ強く健在であることを自慢したかったから", "自分の命が長くないことを知っており、これが最後の別れになると覚悟していたから", "バスのエンジン音がうるさく、言葉が届かないと思ったから"] },
+    
+    // 社会
+    { id: "S1", cat: "社会", q: "1858年に井伊直弼が朝廷の許可を得ずに結んだ不平等条約は？", a: "日米修好通商条約", o: ["日米和親条約", "日米修好通商条約", "下関条約", "ポーツマス条約"] },
+    { id: "S2", cat: "社会", q: "明治政府の改革で、地価の3%を税金として「現金」で納めさせたのは？", a: "地租改正", o: ["版籍奉還", "徴兵令", "地租改正", "殖産興業"] },
+    { id: "S3", cat: "社会", q: "日清戦争の講和条約（下関条約）で、日本が清から割譲された島は？", a: "台湾", o: ["樺太", "南満州", "沖縄", "台湾"] },
+    { id: "S4", cat: "社会", q: "1937年、盧溝橋事件をきっかけに始まった全面的な戦争は？", a: "日中戦争", o: ["日露戦争", "第一次世界大戦", "満州事変", "日中戦争"] },
+    { id: "S5", cat: "社会", q: "1894年に領事裁判権（法権）の撤廃に成功した外務大臣は？", a: "陸奥宗光", o: ["小村寿太郎", "陸奥宗光", "岩倉具視", "伊藤博文"] },
+
+    // 数学
+    { id: "M1", cat: "数学", q: "√3 のおよその値（小数）の正しい語呂合わせは？", a: "人並みに奢れや(1.732...)", o: ["一夜一転び(1.414...)", "人並みに奢れや(1.732...)", "富士山麓オウム鳴く(2.236...)", "よくよく見れば(4.949...)"] },
+    { id: "M2", cat: "数学", q: "計算しなさい： √12 ＋ √3", a: "3√3", o: ["√15", "2√3", "3√3", "4√3"] },
+    { id: "M3", cat: "数学", q: "√2 のおよその値（小数）の正しい語呂合わせは？", a: "一夜一転び(1.414...)", o: ["一夜一転び(1.414...)", "人並みに奢れや(1.732...)", "富士山麓オウム鳴く(2.236...)", "ひとなみ(1.732...)"] },
+    { id: "M4", cat: "数学", q: "計算しなさい： √2 × √6", a: "2√3", o: ["√12", "2√3", "3√2", "4"] },
+
+    // 理科
+    { id: "R1", cat: "理科", q: "塩化水素（HCl）が水に溶けて電離する様子を表した式は？", a: "HCl → H⁺ + Cl⁻", o: ["HCl → H⁺ + Cl⁻", "HCl → H₂ + Cl₂", "HCl → H⁻ + Cl⁺", "HCl → H⁺ + Cl²⁻"] },
+    { id: "R2", cat: "理科", q: "水溶液にすると電流が流れる物質（塩化銅など）を何というか？", a: "電解質", o: ["非電解質", "電解質", "イオン", "誘導体"] },
+    { id: "R3", cat: "理科", q: "銅イオンの化学式（イオン式）として正しいものはどれか？", a: "Cu²⁺", o: ["Cu⁺", "Cu²⁺", "Cu⁻", "Cl⁻"] },
+    { id: "R4", cat: "理科", q: "水酸化ナトリウム（NaOH）の正しい電離の式はどれか？", a: "NaOH → Na⁺ + OH⁻", o: ["NaOH → Na⁺ + OH⁻", "NaOH → Na⁻ + OH⁺", "NaOH → Na + H2O", "NaOH → Na⁺ + O²⁻ + H⁺"] },
+
+    // 英語
+    { id: "E1", cat: "英語", q: "「私は今までに3回ハワイに行ったことがあります」これは現在完了のどの用法？", a: "経験", o: ["継続", "完了", "結果", "経験"] },
+    { id: "E2", cat: "英語", q: "「私はちょうど宿題を終えたところです」 (   ) に入る言葉は？ I have (   ) finished my homework.", a: "just", o: ["yet", "already", "just", "never"] },
+    { id: "E3", cat: "英語", q: "「私は3年間ずっとここに住んでいます」これは現在完了のどの用法？", a: "継続", o: ["継続", "完了", "経験", "結果"] },
+    { id: "E4", cat: "英語", q: "現在完了の「完了・結果」の否定文で、文末によく使われる「まだ〜ない」を意味する単語は？", a: "yet", o: ["already", "just", "yet", "never"] },
+    { id: "E5", cat: "英語", q: "「have ＋ 過去分詞」で作る現在完了形。been to と gone to のうち、「〜へ行ったことがある（経験）」を表すのは？", a: "been to", o: ["been to", "gone to", "visited to", "stayed to"] }
 ];
 
-let currentMode = 'normal'; 
 let currentPool = [];
 let currentIndex = 0;
 let score = 0;
 let hasAnswered = false;
 
-// ローカルストレージから間違えた問題のIDリストを取得
+let timeLimit = 20; 
+let timeLeft = 0;
+let timerInterval = null;
+const timerUpdateInterval = 100; 
+
 getMissedIds = () => JSON.parse(localStorage.getItem('missed_questions')) || [];
 saveMissedIds = (ids) => localStorage.setItem('missed_questions', JSON.stringify(ids));
 
@@ -128,49 +173,58 @@ function updateReviewCount() {
     document.getElementById('review-count').innerText = getMissedIds().length;
 }
 
-function setMode(mode) {
-    currentMode = mode;
-    document.getElementById('btn-normal').classList.toggle('active', mode === 'normal');
-    document.getElementById('btn-review').classList.toggle('active', mode === 'review');
-    restartQuiz();
+function showMenu() {
+    document.getElementById('menu-screen').style.display = 'block';
+    document.getElementById('quiz-screen').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'none';
+    document.getElementById('timer-wraper').style.display = 'none';
+    document.getElementById('app-title').innerText = "⚡ 5教科爆速タイムアタック";
+    clearInterval(timerInterval);
+    updateReviewCount();
 }
 
-function restartQuiz() {
-    currentIndex = 0;
-    score = 0;
+function startQuiz(mode) {
     const missedIds = getMissedIds();
-
-    if (currentMode === 'review') {
+    
+    if (mode === 'all') {
+        currentPool = [...quizData];
+        document.getElementById('app-title').innerText = "⚡ 全5教科ランダム集中強化";
+    } else if (mode === 'review') {
         currentPool = quizData.filter(item => missedIds.includes(item.id));
         if (currentPool.length === 0) {
-            alert('現在、間違えた問題はありません！素晴らしい！通常モードを解いてみよう。');
-            setMode('normal');
+            alert('現在、弱点問題はありません！通常強化を選んでみよう。');
             return;
         }
+        document.getElementById('app-title').innerText = "⚡ 弱点リベンジマッチ";
     } else {
-        currentPool = [...quizData]; // 通常モードは全問
+        currentPool = quizData.filter(item => item.cat === mode);
+        document.getElementById('app-title').innerText = `⚡ 強化モード：${mode}`;
     }
 
-    // 問題をシャッフル
     currentPool.sort(() => Math.random() - 0.5);
-    // 最大10問に制限
-    if (currentPool.length > 10) currentPool = currentPool.slice(0, 10);
+    
+    if (currentPool.length > 20) {
+        currentPool = currentPool.slice(0, 20);
+    }
 
-    document.getElementById('quiz-area').style.display = 'block';
-    document.getElementById('result-area').style.display = 'none';
-    updateReviewCount();
+    currentIndex = 0;
+    score = 0;
+    
+    document.getElementById('menu-screen').style.display = 'none';
+    document.getElementById('quiz-screen').style.display = 'block';
+    document.getElementById('timer-wraper').style.display = 'block';
+    
     showQuestion();
 }
 
 function showQuestion() {
     hasAnswered = false;
-    document.getElementById('next-button').style.display = 'none';
     document.getElementById('feedback-text').innerText = '';
+    document.getElementById('feedback-text').className = 'feedback';
     
     const currentQ = currentPool[currentIndex];
     const missedIds = getMissedIds();
 
-    // 弱点バッジの表示制御
     document.getElementById('review-badge').style.display = missedIds.includes(currentQ.id) ? 'inline-block' : 'none';
     
     document.getElementById('quiz-category').innerText = `【${currentQ.cat}】`;
@@ -180,7 +234,6 @@ function showQuestion() {
     const optionsContainer = document.getElementById('options-container');
     optionsContainer.innerHTML = '';
 
-    // 選択肢をシャッフルしてボタン生成
     const shuffledOptions = [...currentQ.o].sort(() => Math.random() - 0.5);
     shuffledOptions.forEach(opt => {
         const btn = document.createElement('button');
@@ -189,11 +242,35 @@ function showQuestion() {
         btn.onclick = () => selectOption(btn, opt, currentQ.a, currentQ.id);
         optionsContainer.appendChild(btn);
     });
+
+    startTimer();
+}
+
+function startTimer() {
+    clearInterval(timerInterval);
+    timeLeft = timeLimit;
+    const timerBar = document.getElementById('timer-bar');
+    timerBar.style.transform = 'scaleX(1)';
+
+    const totalSteps = (timeLimit * 1000) / timerUpdateInterval;
+    let currentStep = totalSteps;
+
+    timerInterval = setInterval(() => {
+        currentStep--;
+        const scale = currentStep / totalSteps;
+        timerBar.style.transform = `scaleX(${scale})`;
+
+        if (currentStep <= 0) {
+            clearInterval(timerInterval);
+            timeOver();
+        }
+    }, timerUpdateInterval);
 }
 
 function selectOption(selectedBtn, chosen, correct, qId) {
     if (hasAnswered) return;
     hasAnswered = true;
+    clearInterval(timerInterval);
 
     const optionsContainer = document.getElementById('options-container');
     const buttons = optionsContainer.getElementsByClassName('option-btn');
@@ -205,23 +282,42 @@ function selectOption(selectedBtn, chosen, correct, qId) {
         feedback.innerText = '⭕ 正解！';
         feedback.className = 'feedback correct-text';
         score++;
-        // 正解したら弱点リストから削除
         missedIds = missedIds.filter(id => id !== qId);
     } else {
         selectedBtn.classList.add('incorrect-ans');
-        feedback.innerText = `❌ 不正解...（正解: ${correct}）`;
+        feedback.innerText = `❌ 不正解!（正解: ${correct}）`;
         feedback.className = 'feedback incorrect-text';
-        // 間違えたら弱点リストに追加
         if (!missedIds.includes(qId)) missedIds.push(qId);
         
-        // 正解のボタンを光らせる
         for (let btn of buttons) {
             if (btn.innerText === correct) btn.classList.add('correct-ans');
         }
     }
     saveMissedIds(missedIds);
-    updateReviewCount();
-    document.getElementById('next-button').style.display = 'block';
+    setTimeout(nextQuestion, 1000);
+}
+
+function timeOver() {
+    if (hasAnswered) return;
+    hasAnswered = true;
+
+    const currentQ = currentPool[currentIndex];
+    const optionsContainer = document.getElementById('options-container');
+    const buttons = optionsContainer.getElementsByClassName('option-btn');
+    const feedback = document.getElementById('feedback-text');
+    
+    feedback.innerText = `⏰ タイムオーバー！（正解: ${currentQ.a}）`;
+    feedback.className = 'feedback incorrect-text';
+
+    let missedIds = getMissedIds();
+    if (!missedIds.includes(currentQ.id)) missedIds.push(currentQ.id);
+    saveMissedIds(missedIds);
+
+    for (let btn of buttons) {
+        if (btn.innerText === currentQ.a) btn.classList.add('correct-ans');
+    }
+
+    setTimeout(nextQuestion, 1000);
 }
 
 function nextQuestion() {
@@ -234,22 +330,22 @@ function nextQuestion() {
 }
 
 function showResult() {
-    document.getElementById('quiz-area').style.display = 'none';
-    document.getElementById('result-area').style.display = 'block';
+    clearInterval(timerInterval);
+    document.getElementById('quiz-screen').style.display = 'none';
+    document.getElementById('timer-wraper').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'block';
     document.getElementById('final-score').innerText = `${score} / ${currentPool.length} 問正解`;
 }
 
 function clearData() {
-    if (confirm('間違えた問題の記録をすべて消去しますか？')) {
+    if (confirm('弱点克服モードの記録をすべて削除しますか？')) {
         localStorage.removeItem('missed_questions');
         updateReviewCount();
-        setMode('normal');
+        showMenu();
     }
 }
 
-// 初回起動
 updateReviewCount();
-restartQuiz();
 </script>
 </body>
 </html>
